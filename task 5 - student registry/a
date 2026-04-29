@@ -1,0 +1,320 @@
+using System;
+
+class Student
+{
+    private static int nextId = 1;
+    private double gpa;
+
+    public string Name { get; set; }
+    public int StudentId { get; private set; }
+    public string Faculty { get; set; }
+
+    public double GPA
+    {
+        get { return gpa; }
+        set
+        {
+            if (value >= 0.0 && value <= 4.0)
+            {
+                gpa = value;
+            }
+            else
+            {
+                throw new ArgumentException("GPA must be between 0.0 and 4.0.");
+            }
+        }
+    }
+
+    public Student(string name, double gpa, string faculty)
+    {
+        Name = name;
+        GPA = gpa;
+        Faculty = faculty;
+        StudentId = nextId;
+        nextId++;
+    }
+
+    public void Print()
+    {
+        Console.WriteLine($"ID: {StudentId} | Name: {Name} | GPA: {GPA} | Faculty: {Faculty}");
+    }
+}
+
+class Registry
+{
+    private Student[] students = new Student[100];
+    private int count = 0;
+
+    public void Add(Student student)
+    {
+        if (count >= 100)
+        {
+            Console.WriteLine("Registry is full. Cannot add more students.");
+            return;
+        }
+
+        students[count] = student;
+        count++;
+        Console.WriteLine("Student added successfully.");
+    }
+
+    public Student FindById(int id)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            if (students[i].StudentId == id)
+            {
+                return students[i];
+            }
+        }
+
+        return null;
+    }
+
+    public Student[] FindByName(string name)
+    {
+        Student[] result = new Student[count];
+        int resultCount = 0;
+
+        for (int i = 0; i < count; i++)
+        {
+            if (students[i].Name.ToLower() == name.ToLower())
+            {
+                result[resultCount] = students[i];
+                resultCount++;
+            }
+        }
+
+        Student[] finalResult = new Student[resultCount];
+
+        for (int i = 0; i < resultCount; i++)
+        {
+            finalResult[i] = result[i];
+        }
+
+        return finalResult;
+    }
+
+    public Student[] GetTopStudents(int n)
+    {
+        if (n > count)
+        {
+            n = count;
+        }
+
+        Student[] copy = new Student[count];
+
+        for (int i = 0; i < count; i++)
+        {
+            copy[i] = students[i];
+        }
+
+        for (int i = 0; i < count - 1; i++)
+        {
+            for (int j = 0; j < count - i - 1; j++)
+            {
+                if (copy[j].GPA < copy[j + 1].GPA)
+                {
+                    Student temp = copy[j];
+                    copy[j] = copy[j + 1];
+                    copy[j + 1] = temp;
+                }
+            }
+        }
+
+        Student[] topStudents = new Student[n];
+
+        for (int i = 0; i < n; i++)
+        {
+            topStudents[i] = copy[i];
+        }
+
+        return topStudents;
+    }
+
+    public void PrintAll()
+    {
+        if (count == 0)
+        {
+            Console.WriteLine("No students in the registry.");
+            return;
+        }
+
+        for (int i = 0; i < count; i++)
+        {
+            students[i].Print();
+        }
+    }
+}
+
+class Program
+{
+    static void Main()
+    {
+        Registry registry = new Registry();
+        bool running = true;
+
+        while (running)
+        {
+            Console.WriteLine();
+            Console.WriteLine("Student Registry System");
+            Console.WriteLine("1. Add a new student");
+            Console.WriteLine("2. Find a student by ID");
+            Console.WriteLine("3. Find students by name");
+            Console.WriteLine("4. Display top N students by GPA");
+            Console.WriteLine("5. Print all students");
+            Console.WriteLine("6. Exit");
+            Console.Write("Choose an option: ");
+
+            string choice = Console.ReadLine();
+
+            switch (choice)
+            {
+                case "1":
+                    AddStudent(registry);
+                    break;
+
+                case "2":
+                    FindStudentById(registry);
+                    break;
+
+                case "3":
+                    FindStudentsByName(registry);
+                    break;
+
+                case "4":
+                    DisplayTopStudents(registry);
+                    break;
+
+                case "5":
+                    registry.PrintAll();
+                    break;
+
+                case "6":
+                    running = false;
+                    Console.WriteLine("Program finished.");
+                    break;
+
+                default:
+                    Console.WriteLine("Invalid option. Please choose from 1 to 6.");
+                    break;
+            }
+        }
+    }
+
+    static void AddStudent(Registry registry)
+    {
+        Console.Write("Enter student name: ");
+        string name = Console.ReadLine();
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            Console.WriteLine("Name cannot be empty.");
+            return;
+        }
+
+        Console.Write("Enter GPA: ");
+        bool validGpa = double.TryParse(Console.ReadLine(), out double gpa);
+
+        if (!validGpa)
+        {
+            Console.WriteLine("Invalid GPA. Please enter a number.");
+            return;
+        }
+
+        Console.Write("Enter faculty: ");
+        string faculty = Console.ReadLine();
+
+        if (string.IsNullOrWhiteSpace(faculty))
+        {
+            Console.WriteLine("Faculty cannot be empty.");
+            return;
+        }
+
+        try
+        {
+            Student student = new Student(name, gpa, faculty);
+            registry.Add(student);
+        }
+        catch (ArgumentException ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+    static void FindStudentById(Registry registry)
+    {
+        Console.Write("Enter student ID: ");
+        bool validId = int.TryParse(Console.ReadLine(), out int id);
+
+        if (!validId)
+        {
+            Console.WriteLine("Invalid ID. Please enter a number.");
+            return;
+        }
+
+        Student student = registry.FindById(id);
+
+        if (student == null)
+        {
+            Console.WriteLine("Student not found.");
+        }
+        else
+        {
+            student.Print();
+        }
+    }
+
+    static void FindStudentsByName(Registry registry)
+    {
+        Console.Write("Enter student name: ");
+        string name = Console.ReadLine();
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            Console.WriteLine("Name cannot be empty.");
+            return;
+        }
+
+        Student[] foundStudents = registry.FindByName(name);
+
+        if (foundStudents.Length == 0)
+        {
+            Console.WriteLine("No students found with this name.");
+        }
+        else
+        {
+            for (int i = 0; i < foundStudents.Length; i++)
+            {
+                foundStudents[i].Print();
+            }
+        }
+    }
+
+    static void DisplayTopStudents(Registry registry)
+    {
+        Console.Write("Enter N: ");
+        bool validN = int.TryParse(Console.ReadLine(), out int n);
+
+        if (!validN || n <= 0)
+        {
+            Console.WriteLine("Invalid number. N must be greater than 0.");
+            return;
+        }
+
+        Student[] topStudents = registry.GetTopStudents(n);
+
+        if (topStudents.Length == 0)
+        {
+            Console.WriteLine("No students in the registry.");
+            return;
+        }
+
+        Console.WriteLine("Top students by GPA:");
+
+        for (int i = 0; i < topStudents.Length; i++)
+        {
+            topStudents[i].Print();
+        }
+    }
+}
